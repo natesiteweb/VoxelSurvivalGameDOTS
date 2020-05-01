@@ -16,8 +16,8 @@ public static class LookupTables
 
     public struct RegularCell
     {
-        byte geometryCounts;        // High nibble is vertex count, low nibble is triangle count.
-        byte[] vertexIndex;         // Groups of 3 indexes giving the triangulation.
+        public byte geometryCounts;        // High nibble is vertex count, low nibble is triangle count.
+        public byte[] vertexIndex;         // Groups of 3 indexes giving the triangulation.
 
         public RegularCell(byte gc, byte[] vi)
         {
@@ -25,7 +25,7 @@ public static class LookupTables
             this.vertexIndex = vi;
         }
 
-        public long GetVertexCount()
+        /*public long GetVertexCount()
         {
             return (geometryCounts >> 4);
         }
@@ -38,7 +38,7 @@ public static class LookupTables
         public byte[] Indices()
         {
             return vertexIndex;
-        }
+        }*/
     };
 
     public static readonly byte[] RegularCellClass = new byte[]

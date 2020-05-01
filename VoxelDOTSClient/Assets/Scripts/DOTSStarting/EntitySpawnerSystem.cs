@@ -52,8 +52,17 @@ public class EntitySpawnerSystem : ComponentSystem
         entityArray.Dispose();*/
     }
 
+    protected override void OnStopRunning()
+    {
+        
+    }
+
     protected override void OnUpdate()
     {
+        /*Entities.ForEach((Entity entity, ref ChunkComponent chunkComponent) =>
+        {
+            EntityManager.AddComponentData(entity, new Translation { Value = new float3(20f, 20f, 20f) });
+        });*/
         /*NativeArray<float3> positions = new NativeArray<float3>(10000, Allocator.TempJob);
         NativeArray<float> moveSpeeds = new NativeArray<float>(10000, Allocator.TempJob);
 
