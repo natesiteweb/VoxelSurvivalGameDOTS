@@ -1323,9 +1323,9 @@ MonoBehaviour:
   noiseName: Noise1
   seed: 1337
   frequency: 0.00005
-  noiseType: 4
+  noiseType: 5
   axisScales: {x: 1, y: 1, z: 1}
-  octaves: 3
+  octaves: 4
   lacunarity: 2
   gain: 0.5
   fractalType: 0
@@ -1344,7 +1344,7 @@ MonoBehaviour:
   perturbLacunarity: 2
   perturbGain: 0.5
   generalSettingsFold: 1
-  fractalSettingsFold: 0
+  fractalSettingsFold: 1
   cellularSettingsFold: 0
   perturbSettingsFold: 0
 --- !u!114 &1068731386
@@ -1362,12 +1362,12 @@ MonoBehaviour:
   noiseName: Noise2
   seed: 1337
   frequency: 0.05
-  noiseType: 4
+  noiseType: 5
   axisScales: {x: 1, y: 1, z: 1}
-  octaves: 3
-  lacunarity: 2
-  gain: 0.5
-  fractalType: 0
+  octaves: 4
+  lacunarity: 1.32
+  gain: 0.23
+  fractalType: 2
   cellularDistanceFunction: 0
   cellularReturnType: 1
   cellularNoiseLookupType: 4
@@ -1383,7 +1383,7 @@ MonoBehaviour:
   perturbLacunarity: 2
   perturbGain: 0.5
   generalSettingsFold: 1
-  fractalSettingsFold: 0
+  fractalSettingsFold: 1
   cellularSettingsFold: 0
   perturbSettingsFold: 0
 --- !u!1 &1106139195
