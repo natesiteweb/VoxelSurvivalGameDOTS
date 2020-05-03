@@ -5,6 +5,7 @@ using Unity.Mathematics;
 
 public class PlayerControllerv1 : MonoBehaviour
 {
+    public Transform universe;
     public float originThreshold;
     public float gravity;
     public float mouseSpeed;
@@ -25,11 +26,18 @@ public class PlayerControllerv1 : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        //Debug.Log(Vector3.Angle(transform.up, Vector3.up));
+
         if (Vector3.Distance(transform.position, Vector3.zero) > originThreshold)
         {
             lastPlayerPos = transform.position;
+            planet.lastPlayerPos -= lastPlayerPos;
 
-            Transform[] allObjects = FindObjectsOfType<Transform>();            
+            Vector3 lastPlayerRot = transform.eulerAngles;
+
+            Transform[] allObjects = FindObjectsOfType<Transform>();
+
+            
 
             //world.lastPos -= transform.position;
             //oldPos -= transform.position;
@@ -38,14 +46,38 @@ public class PlayerControllerv1 : MonoBehaviour
             {
                 Transform t = (Transform)obj;
 
-                if (t.parent == null)
+                if (((t.parent == null && t != universe) || t.parent == universe))
                 {
                     t.position -= lastPlayerPos;
+
+                    /*float newAngleDegreesZ = 90f - (90f - ((180f - transform.eulerAngles.z) / 2f));
+                    float newSIDEZ = (2f * math.pow(Vector3.Distance(obj.transform.position, transform.position), 2f)) - (2f * math.pow(Vector3.Distance(obj.transform.position, transform.position), 2f) * Mathf.Cos(transform.eulerAngles.z * Mathf.Deg2Rad));
+                    float3 newPosZ = new float3(-Mathf.Sin(newAngleDegreesZ * Mathf.Deg2Rad) * newSIDEZ, -Mathf.Cos(newAngleDegreesZ * Mathf.Deg2Rad) * newSIDEZ, 0f);
+
+                    float newAngleDegreesX = 90f - (90f - ((180f - transform.eulerAngles.x) / 2f));
+                    float newSIDEX = (2f * math.pow(Vector3.Distance(obj.transform.position, transform.position), 2f)) - (2f * math.pow(Vector3.Distance(obj.transform.position, transform.position), 2f) * Mathf.Cos(transform.eulerAngles.x * Mathf.Deg2Rad));
+                    float3 newPosX = new float3(0f, Mathf.Cos(newAngleDegreesX * Mathf.Deg2Rad) * newSIDEX, Mathf.Sin(newAngleDegreesX * Mathf.Deg2Rad) * newSIDEX);
+
+                    float newAngleDegreesY = 90f - (90f - ((180f - transform.eulerAngles.y) / 2f));
+                    float newSIDEY = (2f * math.pow(Vector3.Distance(obj.transform.position, transform.position), 2f)) - (2f * math.pow(Vector3.Distance(obj.transform.position, transform.position), 2f) * Mathf.Cos(transform.eulerAngles.y * Mathf.Deg2Rad));
+                    float3 newPosY = new float3(0f, Mathf.Cos(newAngleDegreesX * Mathf.Deg2Rad) * newSIDEX, Mathf.Sin(newAngleDegreesX * Mathf.Deg2Rad) * newSIDEX);
+
+                    float3 test = new float3();
+                    test.x;
+                    test.y;
+                    test.z;*/
+
+                    //t.position += Vector3.Distance(obj.position, lastPlayerPos) * Vector3.right * math.cos(math.radians(90f - Vector3.Angle(transform.up, Vector3.up)));
                 }
             }
 
             //universe.position = universe.position-transform.position;
+            universe.eulerAngles -= lastPlayerRot;
+            transform.rotation = Quaternion.identity;
+
+            //universe.position = Vector3.zero;
         }
+
 
         if (Input.GetMouseButton(0))
         {
@@ -58,9 +90,9 @@ public class PlayerControllerv1 : MonoBehaviour
 
     void FixedUpdate()
     {
-        rb.AddForce(((planet.transform.position + new Vector3(planet.LODActualSize / 2f, planet.LODActualSize / 2f, planet.LODActualSize / 2f) - transform.position).normalized * gravity));
+        rb.AddForce(((planet.transform.position - transform.position).normalized * gravity));
 
-        Quaternion newRot = Quaternion.FromToRotation(Vector3.up, -((planet.transform.position + new Vector3(planet.LODActualSize / 2f, planet.LODActualSize / 2f, planet.LODActualSize / 2f)) - transform.position).normalized);
+        Quaternion newRot = Quaternion.FromToRotation(Vector3.up, -(planet.transform.position - transform.position).normalized);
 
         transform.rotation = newRot;
 

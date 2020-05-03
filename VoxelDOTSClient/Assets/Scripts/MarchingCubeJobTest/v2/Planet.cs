@@ -24,6 +24,12 @@ public class Planet : MonoBehaviour
     public int batchSize = 32;
     public int threadCount = 2;
     public bool smoothNormals;
+    public float basePlayerMovementThreshold;
+    float playerMovementThreshold;
+    [SerializeField]
+    private int maxSplitLOD = 2;
+    [SerializeField]
+    private int curSplitLOD = 0;
 
     public int poolSize = 2000;
 
@@ -34,6 +40,8 @@ public class Planet : MonoBehaviour
     public int chunksGenerated = 0;
     public Text chunkLoadedText;
     public Text playerVelText;
+    [SerializeField]
+    private GenerateTerrainData terrainGenerator;
 
     public GameObject playerObj;
 
@@ -48,26 +56,26 @@ public class Planet : MonoBehaviour
     GameObject chunkPrefab;
 
     NativeArray<float> densities;
+    //NativeArray<float> colors;
     NativeArray<float3> curVertices;
     NativeArray<float3> curNormals;
+    NativeArray<Color> curColors;
     NativeArray<int> curTriangles;
 
     NativeArray<int> nbTriTable;
     NativeArray<int> triTable;
 
-    int totalSize;
+    public int totalSize;
     float dx;
     float3 originGrid;
 
     Material material;
 
-    float2 tempOffset = float2.zero;
-
-    float[] generationData;
-    float[] generationData2;
+    public Vector3 lastPlayerPos;
 
     void Awake()
     {
+        playerMovementThreshold = basePlayerMovementThreshold;
         meshMap = new Dictionary<Chunk, Mesh>(poolSize);
         //chunkList = new NativeList<Entity>(poolSize, Allocator.Persistent);
         //loadQueue = new NativeQueue<Entity>(Allocator.Persistent);
@@ -79,9 +87,9 @@ public class Planet : MonoBehaviour
         chunkPool = new Queue<GameObject>(poolSize);
 
         totalSize = (baseChunkSize + 1) * (baseChunkSize + 1) * (baseChunkSize + 1);
-        generationData = new float[totalSize];
 
         originGrid = float3.zero;
+        lastPlayerPos = float3.zero;
         dx = 1;
         material = Resources.Load<Material>("Materials/TerrainMat");
         chunkPrefab = Resources.Load<GameObject>("Prefabs/chunkPrefab");
@@ -92,7 +100,8 @@ public class Planet : MonoBehaviour
 
         LODActualSize = (int)Mathf.Pow(2f, maxLOD + Mathf.Log(baseChunkSize, 2f));
 
-        transform.position = new Vector3(-LODActualSize / 2f, -LODActualSize / 2f - radius, -LODActualSize / 2f);
+        //transform.position = new Vector3(-LODActualSize / 2f, -LODActualSize / 2f - radius, -LODActualSize / 2f);
+        transform.position = new float3(0f, -radius, 0f);
 
         for (int i = 0; i < poolSize; i++)
         {
@@ -119,7 +128,7 @@ public class Planet : MonoBehaviour
         {
             GameObject tempChunk = GetChunk();
 
-            tempChunk.transform.localPosition = float3.zero;
+            tempChunk.transform.localPosition = new float3(-LODActualSize / 2f);
 
             Chunk chunk = tempChunk.GetComponent<Chunk>();
 
@@ -194,30 +203,12 @@ public class Planet : MonoBehaviour
 
         chunkLoadedText.text = chunksGenerated.ToString();
 
-        if (playerObj.GetComponent<Rigidbody>().velocity.magnitude > 800f)
-        {
-            logicTime = 1f;
-            minLOD = 6;
-        }
-        else if (playerObj.GetComponent<Rigidbody>().velocity.magnitude > 400f)
-        {
-            logicTime = 0.5f;
-            minLOD = 3;
-        }
-        else if (playerObj.GetComponent<Rigidbody>().velocity.magnitude > 100f)
-        {
-            logicTime = 0.05f;
-            minLOD = 1;
-        }
-        else
-        {
-            logicTime = 0.01f;
-            minLOD = 0;
-        }
+        LODDistanceManiupulation();
 
         if (logicUpdateList.Count > 0 && logicTimer <= 0f)
         {
-            logicTimer = logicTime;
+            //logicTimer = logicTime;
+            logicTimer = 0f;
             ChunkUpdateLogic();
         }
 
@@ -235,12 +226,78 @@ public class Planet : MonoBehaviour
     Vector3 parentCenter;
     Bounds parentBounds;
 
+    float viewDistanceMultiplier;
+    float joinDistanceMultiplier;
+
+    void LODDistanceManiupulation()
+    {
+        if (playerObj.GetComponent<Rigidbody>().velocity.magnitude > 2200f)
+        {
+            logicTime = 1f;
+            minLOD = 11;
+            //viewDistanceMultiplier = 10f;
+            //joinDistanceMultiplier = 18f;
+
+            playerMovementThreshold = basePlayerMovementThreshold * 40f;
+        }
+        else if (playerObj.GetComponent<Rigidbody>().velocity.magnitude > 1400f)
+        {
+            logicTime = 1f;
+            minLOD = 9;
+            //viewDistanceMultiplier = 8f;
+            //joinDistanceMultiplier = 15f;
+
+            playerMovementThreshold = basePlayerMovementThreshold * 22f;
+        }
+        else if (playerObj.GetComponent<Rigidbody>().velocity.magnitude > 800f)
+        {
+            logicTime = 1f;
+            minLOD = 7;
+            //viewDistanceMultiplier = 5f;
+            //joinDistanceMultiplier = 11f;
+
+            playerMovementThreshold = basePlayerMovementThreshold * 16f;
+        }
+        else if (playerObj.GetComponent<Rigidbody>().velocity.magnitude > 400f)
+        {
+            logicTime = 0.5f;
+            minLOD = 3;
+            //viewDistanceMultiplier = 4f;
+            //joinDistanceMultiplier = 10f;
+
+            playerMovementThreshold = basePlayerMovementThreshold * 8f;
+        }
+        else if (playerObj.GetComponent<Rigidbody>().velocity.magnitude > 100f)
+        {
+            logicTime = 0.05f;
+            minLOD = 1;
+            //viewDistanceMultiplier = 3f;
+            //joinDistanceMultiplier = 9f;
+
+            playerMovementThreshold = basePlayerMovementThreshold * 2f;
+        }
+        else
+        {
+            logicTime = 0.01f;
+            minLOD = 0;
+            viewDistanceMultiplier = 1f;
+            joinDistanceMultiplier = 6f;
+
+            playerMovementThreshold = basePlayerMovementThreshold * 1f;
+        }
+
+        if (Vector3.Distance(playerObj.transform.position, lastPlayerPos) > playerMovementThreshold)
+        {
+            playerPos = playerObj.transform.position;
+            lastPlayerPos = playerObj.transform.position;
+        }
+
+        playerVel = playerObj.GetComponent<Rigidbody>().velocity * 2f;
+    }
+
     void ChunkUpdateLogic()
     {
         float startTime = Time.realtimeSinceStartup;
-
-        playerPos = playerObj.transform.position;
-        playerVel = playerObj.GetComponent<Rigidbody>().velocity * 2f;
 
         playerVelText.text = playerObj.GetComponent<Rigidbody>().velocity.magnitude.ToString();
 
@@ -281,7 +338,7 @@ public class Planet : MonoBehaviour
 
                     float parentSqrDistance = parentBounds.SqrDistance(playerPos + playerVel);
 
-                    if (ShouldJoinDistance(parentSqrDistance, curChunk.values.actualChunkSize))
+                    if (ShouldJoinDistance(parentSqrDistance, curChunk.values.actualChunkSize, joinDistanceMultiplier))
                     {
                         curChunk.values.hasJoined = false;
 
@@ -347,10 +404,10 @@ public class Planet : MonoBehaviour
 
             if (curChunk.values.isDoneLoading && ((curChunk.parentFromSplit == null && curChunk.values.isChild) || !curChunk.values.isChild) && !curChunk.values.hasSplit && !curChunk.values.hasJoined && (!curChunk.values.isEmpty && !curChunk.values.isFull))
             {
-                if (curChunk.values.markedToSplit || ShouldSplitDistance(sqrDistance, curChunk.values.actualChunkSize, curChunk.values.isEmpty, curChunk.values.isFull, minLOD, curChunk.values.lod))
+                if (curChunk.values.markedToSplit || ShouldSplitDistance(sqrDistance, curChunk.values.actualChunkSize, curChunk.values.isEmpty, curChunk.values.isFull, minLOD, curChunk.values.lod, viewDistanceMultiplier))
                 {
                     curChunk.values.hasSplit = true;
-                    SplitChunk(curChunk, i);
+                    SplitChunk(curChunk, false);
                     //ShouldSplitLOD()
                 }
             }
@@ -359,15 +416,11 @@ public class Planet : MonoBehaviour
         //Debug.Log("Logic: " + (Time.realtimeSinceStartup - startTime) * 1000f + "ms");
     }
 
-    byte isMeshEmpty;
-
     void GenerateMesh(Chunk entity)
     {
         //entity.values.drawBounds = false;
 
         //EntityManager.RemoveComponent(entity, typeof(ChunkGenerateTag));
-
-        isMeshEmpty = 0;
 
         //Mesh mesh = meshMap[entity];
 
@@ -383,14 +436,12 @@ public class Planet : MonoBehaviour
         NativeArray<uint2> vertPerCell = new NativeArray<uint2>(totalSize, Allocator.TempJob);
         NativeArray<uint> compactedVoxel = new NativeArray<uint>(totalSize, Allocator.TempJob);
 
-        isMeshEmpty = GenerateTerrainData(entity);
+        densities = GetNativeDensityArrays(terrainGenerator.Generate(this, entity));
 
         chunksGenerated++;
 
-        if (isMeshEmpty == 1)
+        if (entity.values.isEmpty || entity.values.isFull)
         {
-            entity.values.isEmpty = true;
-            entity.values.isFull = false;
             entity.values.isDoneLoading = true;
 
             vertPerCell.Dispose();
@@ -399,24 +450,6 @@ public class Planet : MonoBehaviour
             Clean();
 
             return;
-        }
-        else if (isMeshEmpty == 3)
-        {
-            entity.values.isEmpty = true;
-            entity.values.isFull = true;
-            entity.values.isDoneLoading = true;
-
-            vertPerCell.Dispose();
-            compactedVoxel.Dispose();
-            vertPerCellIn.Dispose();
-            Clean();
-
-            return;
-        }
-        else
-        {
-            entity.values.isEmpty = false;
-            entity.values.isFull = false;
         }
 
         var countVJob = new MarchingCubeJobs.CountVertexPerVoxelJob()
@@ -457,7 +490,7 @@ public class Planet : MonoBehaviour
 
         if (totalVerts <= 0)
         {
-            //Debug.LogWarning("Empty iso-surface");
+            Debug.LogWarning("Empty iso-surface");
             entity.values.isDoneLoading = true;
             vertPerCell.Dispose();
             compactedVoxel.Dispose();
@@ -470,6 +503,7 @@ public class Planet : MonoBehaviour
 
         curVertices = new NativeArray<float3>((int)totalVerts, Allocator.Persistent);
         curNormals = new NativeArray<float3>((int)totalVerts, Allocator.Persistent);
+        curColors = new NativeArray<Color>((int)totalVerts, Allocator.Persistent);
         //Double the triangles to have both faces
         curTriangles = new NativeArray<int>((int)totalVerts, Allocator.Persistent);
 
@@ -521,6 +555,26 @@ public class Planet : MonoBehaviour
         var NormJobHandle = NormJob.Schedule((int)totalVerts, batchSize, MCJobHandle);
         NormJobHandle.Complete();
 
+        //TEMP COLORS
+        var ColorJob = new MarchingCubeJobs.ComputeColorsJobTEMP()
+        {
+            colors = curColors,
+            vertices = curVertices,
+            densV = densities,
+            radius = radius,
+            actualChunkSize = entity.values.actualChunkSize,
+            chunkPos = entity.values.chunkPos,
+            LODActualSize = LODActualSize,
+            baseChunkSize = baseChunkSize,
+            lod = entity.values.lod,
+            oriGrid = originGrid,
+            dx = dx,
+            chunkSize = baseChunkSize + 1,
+            vertexScale = entity.values.vertexScale
+        };
+        var ColorJobHandle = ColorJob.Schedule((int)totalVerts, batchSize, NormJobHandle);
+        ColorJobHandle.Complete();
+
 
         /*for (int i = 0; i < totalVerts - 3; i += 3) {
             curTriangles[i] = i;
@@ -564,10 +618,13 @@ public class Planet : MonoBehaviour
             mesh = new Mesh();
 
         mesh.Clear();
+
         mesh.SetVertices(curVertices);
         mesh.triangles = getTriangles();
 
-        if(smoothNormals)
+        mesh.SetColors(curColors);
+
+        if (smoothNormals)
             mesh.SetNormals(curNormals);
         else
             mesh.RecalculateNormals();
@@ -594,8 +651,9 @@ public class Planet : MonoBehaviour
         Clean();
     }
 
-    void SplitChunk(Chunk parentChunk, int index)
+    void SplitChunk(Chunk parentChunk, bool isLODSplit)
     {
+
         //logicUpdateList.RemoveAt(index);
 
         float splitTimer = Time.realtimeSinceStartup;
@@ -603,6 +661,8 @@ public class Planet : MonoBehaviour
         //chunkMap.Remove(parentChunk.values.chunkPos);
 
         ShouldSplitLOD(parentChunk);
+
+        //SplitTransvoxelCheck(parentChunk);
 
         /*if (loadQueue.Contains(parentChunk))
             loadQueue.Remove(parentChunk);*/
@@ -639,7 +699,10 @@ public class Planet : MonoBehaviour
                     parentChunk.parentList.CopyTo(chunk.parentList, 0);
                     chunk.parentList[chunk.parentList.Length - 1] = new int3(x, y, z);
 
-                    tempChunk.transform.localPosition = new float3(x * chunk.values.actualChunkSize, y * chunk.values.actualChunkSize, z * chunk.values.actualChunkSize) + parentChunk.values.chunkPos;
+                    tempChunk.transform.localPosition = new float3(-LODActualSize / 2f) + new float3(x * chunk.values.actualChunkSize, y * chunk.values.actualChunkSize, z * chunk.values.actualChunkSize) + parentChunk.values.chunkPos;
+                    tempChunk.transform.localRotation = Quaternion.identity;
+
+                    //tempChunk.transform.SetParent(null);
 
                     chunk.values.chunkPos = new int3(x * chunk.values.actualChunkSize, y * chunk.values.actualChunkSize, z * chunk.values.actualChunkSize) + parentChunk.values.chunkPos;
 
@@ -655,16 +718,19 @@ public class Planet : MonoBehaviour
             }
         }
 
+        if (isLODSplit)
+            curSplitLOD--;
+
         //Debug.Log("Split: " + (Time.realtimeSinceStartup - splitTimer) * 1000f + "ms");
     }
 
-    static bool ShouldSplitDistance(float distance, int actualChunkSize, bool isEmpty, bool isFull, byte minLOD, byte lod)
+    static bool ShouldSplitDistance(float distance, int actualChunkSize, bool isEmpty, bool isFull, byte minLOD, byte lod, float viewDistanceMultiplier)
     {
         bool result = false;
 
-        float checkDist = (float)actualChunkSize / 2f;
+        float checkDist = ((float)actualChunkSize / 2f) * viewDistanceMultiplier + 10f;
 
-        if (distance < (checkDist * checkDist) + 100f && (!isEmpty && !isFull) && lod > minLOD)
+        if (distance < (checkDist * checkDist) && (!isEmpty && !isFull) && lod > minLOD)
         {
             result = true;
         }
@@ -672,11 +738,11 @@ public class Planet : MonoBehaviour
         return result;
     }
 
-    static bool ShouldJoinDistance(float distance, int actualChunkSize)
+    static bool ShouldJoinDistance(float distance, int actualChunkSize, float joinDistanceMultiplier)
     {
         bool join = false;
 
-        float checkDist = (float)actualChunkSize * 8f + 400f;
+        float checkDist = ((float)actualChunkSize * joinDistanceMultiplier) + 80f;
 
         if (distance > (checkDist * checkDist))
         {
@@ -686,14 +752,14 @@ public class Planet : MonoBehaviour
         return join;
     }
 
-    int3 parentPos;
+    //int3 parentPos;
     bool needToSplit = true;
 
     void ShouldSplitLOD(Chunk chunk)
     {
         if (chunk.values.lod < maxLOD - 1)
         {
-            parentPos = chunk.values.chunkPos - chunk.parentList[chunk.parentList.Length - 1] * chunk.values.actualChunkSize;
+            //parentPos = chunk.values.chunkPos - chunk.parentList[chunk.parentList.Length - 1] * chunk.values.actualChunkSize;
 
             int3[] sides = GetAdjacentSides(chunk.values.chunkPos, chunk.values.actualChunkSize, chunk.parentList[chunk.parentList.Length - 1]);
             //Vector3Int[] parentSides = GetAdjacentSidesParent(chunk.chunkPos, chunk.actualChunkSize * 2f, chunk.parentList[chunk.parentList.Count - 2]);
@@ -702,7 +768,11 @@ public class Planet : MonoBehaviour
             {
                 needToSplit = true;
 
-                if (chunkMap.ContainsKey(sides[i]) && chunkMap[sides[i]].values.lod <= chunk.values.lod)
+                Chunk curSide;
+                Chunk curParent;
+                int3 curParentPos = GetParentChunk(sides[i], chunk.values.actualChunkSize * 2);
+
+                if (chunkMap.TryGetValue(sides[i], out curSide) && curSide.values.lod <= chunk.values.lod)
                 {
                     needToSplit = false;
                     //Debug.Log("DONT SPLIT");
@@ -712,27 +782,60 @@ public class Planet : MonoBehaviour
                     //Debug.Log("WHY SPLIT");
                 }
 
-                if (needToSplit && IsInBounds(GetParentChunk(sides[i], chunk.values.actualChunkSize * 2), LODActualSize) && chunkMap.ContainsKey(GetParentChunk(sides[i], chunk.values.actualChunkSize * 2)))
+                if (needToSplit && IsInBounds(curParentPos, LODActualSize) && chunkMap.TryGetValue(curParentPos, out curParent))
                 {
-                    //Debug.Log("SPLIT LOD: " + GetParentChunk(sides[i], chunk.actualChunkSize * 4f));
+                    //TODO: Experiment with allowing multiple chunks to split per frame. Too many, slow performance; too few, it takes longer for chunks load(split)
 
+                    if (curSplitLOD >= maxSplitLOD)
+                        curParent.values.markedToSplit = true;
+                    else
+                    {
+                        curSplitLOD++;
+                        SplitChunk(curParent, true);
 
-
-                    chunkMap[GetParentChunk(sides[i], chunk.values.actualChunkSize * 2)].values.markedToSplit = true;
+                        Debug.Log("SPLIT: " + curSplitLOD);
+                    }
                     //Debug.Log("SPLIT");
 
-                    /*if (!chunk.hasJoined && chunk.doneLoading && !chunk.isEmptyOrFull && !chunk.hasSplit && ((chunk.isChild && chunk.parentChunkFromSplit == null) || !chunk.isChild))
-                    {
-                        if (chunk.markedToSplit)
-                        {
-                            //Debug.Log("SPLIT");
-                            SplitChunk(chunk, true);
-                        }
-                    }*/
+                }
+            }
+        }
+    }
 
+    void SplitTransvoxelCheck(Chunk chunk)
+    {
+        if (chunk.values.lod < maxLOD - 1)
+        {
+            //parentPos = chunk.values.chunkPos - chunk.parentList[chunk.parentList.Length - 1] * chunk.values.actualChunkSize;
 
+            int3[] sides = GetAdjacentSides(chunk.values.chunkPos, chunk.values.actualChunkSize, chunk.parentList[chunk.parentList.Length - 1]);
+            //Vector3Int[] parentSides = GetAdjacentSidesParent(chunk.chunkPos, chunk.actualChunkSize * 2f, chunk.parentList[chunk.parentList.Count - 2]);
 
-                    //SplitChunk(chunkMap[GetParentChunk(sides[i], chunk.actualChunkSize * 4f)], true);
+            for (int i = 0; i < sides.Length; i++)
+            {
+                needToSplit = true;
+
+                Chunk curSide;
+                Chunk curParent;
+                int3 curParentPos = GetParentChunk(sides[i], chunk.values.actualChunkSize * 2);
+
+                if (chunkMap.TryGetValue(sides[i], out curSide) && curSide.values.lod <= chunk.values.lod)
+                {
+                    needToSplit = false;
+                    //Debug.Log("DONT SPLIT");
+                }
+                else
+                {
+                    //Debug.Log("WHY SPLIT");
+                }
+
+                if (needToSplit && IsInBounds(curParentPos, LODActualSize) && chunkMap.TryGetValue(curParentPos, out curParent))
+                {
+                    //TODO: Experiment with allowing multiple chunks to split per frame. Too many, slow performance; too few, it takes longer for chunks load(split)
+
+                    curParent.values.markedToSplit = true;
+                    //Debug.Log("SPLIT");
+
                 }
             }
         }
@@ -805,7 +908,10 @@ public class Planet : MonoBehaviour
         System.Array.Copy(mainSibling.parentList, 0, chunk.parentList, 0, mainSibling.parentList.Length - 1);
         //mainSibling.parentList.CopyTo(chunk.parentList, 0);
 
-        tempChunk.transform.localPosition = chunkPos;
+        tempChunk.transform.localPosition = new float3(-LODActualSize / 2f) + chunkPos;
+        tempChunk.transform.localRotation = Quaternion.identity;
+
+        //tempChunk.transform.SetParent(null);
 
         chunk.values.chunkPos = mainSibling.values.chunkPos;
 
@@ -853,80 +959,6 @@ public class Planet : MonoBehaviour
         //RemoveChunk(mainSibling);
     }
 
-    float posModifier;
-    float scaleFactor;
-
-    bool isFull;
-    bool isEmpty;
-    float thisHeight;
-
-    byte emptyReturnValue;
-
-    byte GenerateTerrainData(Chunk entity)
-    {
-        emptyReturnValue = 0;
-        isFull = true;
-        isEmpty = true;
-
-        scaleFactor = entity.values.actualChunkSize / baseChunkSize;
-        densities = new NativeArray<float>(totalSize, Allocator.Persistent);
-        posModifier = (LODActualSize / 2f);
-
-        noise1.fastNoiseSIMD.SetAxisScales(scaleFactor, scaleFactor, scaleFactor);
-        generationData = noise1.fastNoiseSIMD.GetNoiseSet(entity.values.chunkPos.x / (int)scaleFactor, entity.values.chunkPos.y / (int)scaleFactor, entity.values.chunkPos.z / (int)scaleFactor, baseChunkSize + 1, baseChunkSize + 1, baseChunkSize + 1);
-
-        noise2.fastNoiseSIMD.SetAxisScales(scaleFactor, scaleFactor, scaleFactor);
-        generationData2 = noise2.fastNoiseSIMD.GetNoiseSet(entity.values.chunkPos.x / (int)scaleFactor, entity.values.chunkPos.y / (int)scaleFactor, entity.values.chunkPos.z / (int)scaleFactor, baseChunkSize + 1, baseChunkSize + 1, baseChunkSize + 1);
-
-        int id = 0;
-        for (int i = 0; i < baseChunkSize + 1; i++)
-        {
-            for (int j = 0; j < baseChunkSize + 1; j++)
-            {
-                for (int k = 0; k < baseChunkSize + 1; k++)
-                {
-                    //float x = i - posModifier + entity.chunkPos.x / scaleFactor;
-                    //float y = j - posModifier + entity.chunkPos.y / scaleFactor;
-                    //float z = k - posModifier + entity.chunkPos.z / scaleFactor;
-                    float x = i * scaleFactor - posModifier + entity.values.chunkPos.x;
-                    float y = j * scaleFactor - posModifier + entity.values.chunkPos.y;
-                    float z = k * scaleFactor - posModifier + entity.values.chunkPos.z;
-
-                    //densVal[id++] = (x * x * x * x - 5.0f * x * x + y * y * y * y - 5.0f * y * y + z * z * z * z - 5.0f * z * z + 11.8f) * 0.2f + 0.5f;
-
-                    //float thisHeight = 8f * Mathf.PerlinNoise((i + tempOffset.x) * .1f, (k + tempOffset.y) * .1f);
-                    thisHeight = (x * x + y * y + z * z) - (radius * radius) + (Mathf.Min(0, generationData[id] * 10000000000f - 1f)) + generationData2[id] * 6000000f;
-
-                    densities[id] = thisHeight;
-                    id++;
-
-                    if (thisHeight < isoValue)
-                        isEmpty = false;
-
-                    if (thisHeight > isoValue)
-                        isFull = false;
-
-                    // densities[id++] = j - thisHeight;
-                }
-            }
-        }
-
-        if (isEmpty && !isFull)
-        {
-            emptyReturnValue = 1;
-        }
-        else if (isEmpty && isFull)
-        {
-            isEmpty = true;
-            isFull = true;
-            emptyReturnValue = 3;
-        }
-        else
-            isFull = false;
-
-        return emptyReturnValue;
-    }
-
     public int[] getTriangles()
     {
         int[] res = new int[curTriangles.Length];
@@ -953,6 +985,26 @@ public class Planet : MonoBehaviour
             // memcopy the native array over the top
             UnsafeUtility.MemCpy(triArrayPointer, NativeArrayUnsafeUtility.GetUnsafeBufferPointerWithoutChecks(triBuffer), triArray.Length * (long)UnsafeUtility.SizeOf<float>());
         }
+    }
+
+    unsafe NativeArray<float> GetNativeDensityArrays(float[] densityValues)
+    {
+        // create a destination NativeArray to hold the vertices
+        NativeArray<float> verts = new NativeArray<float>(densityValues.Length, Allocator.Persistent,
+            NativeArrayOptions.UninitializedMemory);
+
+        // pin the mesh's vertex buffer in place...
+        fixed (void* vertexBufferPointer = densityValues)
+        {
+            // ...and use memcpy to copy the Vector3[] into a NativeArray<floar3> without casting. whould be fast!
+            UnsafeUtility.MemCpy(NativeArrayUnsafeUtility.GetUnsafeBufferPointerWithoutChecks(verts),
+                vertexBufferPointer, densityValues.Length * (long)UnsafeUtility.SizeOf<float>());
+        }
+        // we only hve to fix the .net array in place, the NativeArray is allocated in the C++ side of the engine and
+        // wont move arround unexpectedly. We have a pointer to it not a reference! thats basically what fixed does,
+        // we create a scope where its 'safe' to get a pointer and directly manipulate the array
+
+        return verts;
     }
 
     GameObject GetChunk()
@@ -1010,6 +1062,8 @@ public class Planet : MonoBehaviour
         chunk.GetComponent<MeshFilter>().mesh.Clear();
         chunk.GetComponent<MeshCollider>().sharedMesh.Clear();
 
+        //chunk.transform.SetParent(transform);
+
         chunkPool.Enqueue(chunk.gameObject);
         chunk.enabled = false;
     }
@@ -1063,6 +1117,8 @@ public class Planet : MonoBehaviour
             curNormals.Dispose();
         if (curTriangles.IsCreated)
             curTriangles.Dispose();
+        if (curColors.IsCreated)
+            curColors.Dispose();
     }
 
     void initTriTable()

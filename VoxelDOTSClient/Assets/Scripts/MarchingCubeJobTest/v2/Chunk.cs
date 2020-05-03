@@ -39,8 +39,11 @@ public class Chunk : MonoBehaviour
     {
         if (planet != null && values.drawBounds && planet.drawChunkBounds)
         {
+            Matrix4x4 rotationMatrix = Matrix4x4.TRS(transform.position, transform.rotation, transform.lossyScale);
+            Gizmos.matrix = rotationMatrix;
+
             Gizmos.color = values.wireColor;
-            Gizmos.DrawWireCube(new Vector3(values.actualChunkSizeHalf, values.actualChunkSizeHalf, values.actualChunkSizeHalf) + transform.position, new Vector3(values.actualChunkSize, values.actualChunkSize, values.actualChunkSize));
+            Gizmos.DrawWireCube(new Vector3(values.actualChunkSizeHalf, values.actualChunkSizeHalf, values.actualChunkSizeHalf), new Vector3(values.actualChunkSize, values.actualChunkSize, values.actualChunkSize));
         }
     }
 }

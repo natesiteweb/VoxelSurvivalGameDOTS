@@ -305,4 +305,78 @@ public class MarchingCubeJobs
 
         }
     }
+
+    public struct ComputeColorsJobTEMP : IJobParallelFor
+    {
+        [NativeDisableParallelForRestriction]
+        public NativeArray<Color> colors;
+
+        [ReadOnly] public NativeArray<float3> vertices;
+        [ReadOnly] public NativeArray<float> densV;
+        [ReadOnly] public float radius;
+        [ReadOnly] public int LODActualSize;
+        [ReadOnly] public int actualChunkSize;
+        [ReadOnly] public int baseChunkSize;
+        [ReadOnly] public int lod;
+        [ReadOnly] public float3 chunkPos;
+        [ReadOnly] public float3 oriGrid;
+        [ReadOnly] public float dx;
+        //[ReadOnly] public int3 gridSize;
+        [ReadOnly] public int chunkSize;
+        [ReadOnly] public float vertexScale;
+
+        void IJobParallelFor.Execute(int index)
+        {
+
+            float3 v = vertices[index];
+            int3 ijk = (int3)((v - oriGrid) / dx / vertexScale);
+            int3 ijk2 = (int3)((v - oriGrid) / dx);
+
+            /*int id = to1D(ijk, chunkSize);
+            float field0 = densV[id];
+            float field1 = densV[id];
+            float field2 = densV[id];
+            float field3 = densV[id];
+            float field4 = densV[id];
+            float field5 = densV[id];
+
+            if (ijk.x < chunkSize - 1)
+                field0 = densV[to1D(ijk + new int3(1, 0, 0), chunkSize)];
+            if (ijk.x > 0)
+                field1 = densV[to1D(ijk - new int3(1, 0, 0), chunkSize)];
+            if (ijk.y < chunkSize - 1)
+                field2 = densV[to1D(ijk + new int3(0, 1, 0), chunkSize)];
+            if (ijk.y > 0)
+                field3 = densV[to1D(ijk - new int3(0, 1, 0), chunkSize)];
+            if (ijk.z < chunkSize - 1)
+                field4 = densV[to1D(ijk + new int3(0, 0, 1), chunkSize)];
+            if (ijk.z > 0)
+                field5 = densV[to1D(ijk - new int3(0, 0, 1), chunkSize)];*/
+
+            float posModifier = (LODActualSize / 2f);
+            float scaleFactor = actualChunkSize / baseChunkSize;
+
+            float x = ijk.x * scaleFactor - posModifier + chunkPos.x;
+            float y = ijk.y * scaleFactor - posModifier + chunkPos.y;
+            float z = ijk.z * scaleFactor - posModifier + chunkPos.z;
+
+            Color n;
+
+            float distance = math.sqrt((x * x) + (y * y) + (z * z));
+
+            if (distance > radius + 15f && lod < 11)
+                n = Color.red;
+
+            n = new Color(math.clamp(((distance - (radius + 500f)) / 50f), 0f, 1f), 0f, 0f);
+
+            if ((distance < radius + 2f))
+                n = Color.green;
+
+            if(lod >= 11)
+                n = Color.green;
+
+            colors[index] = n;
+
+        }
+    }
 }
