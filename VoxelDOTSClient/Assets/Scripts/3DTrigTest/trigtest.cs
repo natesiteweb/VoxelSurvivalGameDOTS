@@ -18,7 +18,15 @@ public class trigtest : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        
+        Vector3 posRelative = pivot.InverseTransformPoint(point.position);
+
+        Vector3 relativeForward = pivot.forward;
+        Vector3 relativeUp = pivot.position - point.position;
+
+        point.rotation = Quaternion.Inverse(pivot.rotation) * point.rotation;
+        pivot.rotation = Quaternion.identity;
+
+        point.position = pivot.TransformPoint(posRelative);
     }
 
     // Update is called once per frame
@@ -27,14 +35,6 @@ public class trigtest : MonoBehaviour
 
     void Update()
     {
-        currentAngle += Time.deltaTime / 4f;
-
-        Vector3 newPos = new Vector3();
-        newPos.x = Mathf.Sin(currentAngle) * 10f;
-        newPos.z = Mathf.Cos(currentAngle) * 10f;
-
-        point.position = newPos;
-
         if (showDebug)
         {
             Debug.DrawRay(point.position, point.rotation * Vector3.up, Color.black);

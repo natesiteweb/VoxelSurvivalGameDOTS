@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: TerrainMat
-  m_Shader: {fileID: 4800000, guid: 6213e1db67e877c459abab1510d23cb1, type: 3}
+  m_Shader: {fileID: 4800000, guid: db7b70ec6bcc8b84a87618e274043812, type: 3}
   m_ShaderKeywords: 
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 1
@@ -20,15 +20,15 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _BumpMap:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: f796122c46d75c441b729e03e85dbd00, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _BumpMap2:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: 74dbe24c01f5ff648b5c71378a493c42, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _BumpMap3:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: 850e650edfe77124e8e0f4d1265b8361, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _DetailAlbedoMap:
@@ -48,15 +48,15 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: ee6a2ddded35860468c1cca9f1d89d0f, type: 3}
+        m_Texture: {fileID: 2800000, guid: 4f8f2c985b6ac2e4b86ffc638d9b1f5f, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex2:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: d6e97b5dc06b7394c90ff417b770d30f, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex3:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: 687e3bf66a39dd84cb7ea204b360d437, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
@@ -64,7 +64,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _OcclusionMap:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: bc80f61d31ffd2b4da5aafdccd0f31a3, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _OcclusionMap2:
@@ -81,16 +81,16 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Floats:
     - YColorAmount: 0.4
-    - _BumpScale: 1
+    - _BumpScale: 0.55
     - _Cutoff: 0.5
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
     - _GlossMapScale: 1
-    - _Glossiness: 0.5
+    - _Glossiness: 0.45
     - _GlossyReflections: 1
-    - _Metallic: 0
+    - _Metallic: 0.41
     - _Mode: 0
-    - _OcclusionStrength: 1
+    - _OcclusionStrength: 0.242
     - _Parallax: 0.02
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1

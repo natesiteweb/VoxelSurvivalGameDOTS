@@ -40,7 +40,7 @@ public class GenerateTerrainData : MonoBehaviour
         {
             noiseValues[i] = new float[planet.totalSize];
             noises[i].fastNoiseSIMD.SetAxisScales(scaleFactor, scaleFactor, scaleFactor);
-            noiseValues[i] = noises[i].fastNoiseSIMD.GetNoiseSet(entity.values.chunkPos.x / (int)scaleFactor, entity.values.chunkPos.y / (int)scaleFactor, entity.values.chunkPos.z / (int)scaleFactor, planet.baseChunkSize + 1, planet.baseChunkSize + 1, planet.baseChunkSize + 1);
+            noiseValues[i] = noises[i].fastNoiseSIMD.GetNoiseSet(entity.values.chunkPos.x / (int)scaleFactor, entity.values.chunkPos.y / (int)scaleFactor, entity.values.chunkPos.z / (int)scaleFactor, planet.baseChunkSize + 3, planet.baseChunkSize + 3, planet.baseChunkSize + 3);
         }
 
         isFull = true;
@@ -49,11 +49,11 @@ public class GenerateTerrainData : MonoBehaviour
         posModifier = (planet.LODActualSize / 2f);
 
         int id = 0;
-        for (int i = 0; i < planet.baseChunkSize + 1; i++)
+        for (int i = -1; i < planet.baseChunkSize + 2; i++)
         {
-            for (int j = 0; j < planet.baseChunkSize + 1; j++)
+            for (int j = -1; j < planet.baseChunkSize + 2; j++)
             {
-                for (int k = 0; k < planet.baseChunkSize + 1; k++)
+                for (int k = -1; k < planet.baseChunkSize + 2; k++)
                 {
                     float x = i * scaleFactor - posModifier + entity.values.chunkPos.x;
                     float y = j * scaleFactor - posModifier + entity.values.chunkPos.y;
@@ -66,7 +66,7 @@ public class GenerateTerrainData : MonoBehaviour
                     {
                         if (n == 0)
                         {
-                            noiseSum += Mathf.Min(0, noiseValues[n][id] * multipliers[n]);
+                            noiseSum += math.min(0, noiseValues[n][id] * multipliers[n]);
                         }
                         else
                         {
